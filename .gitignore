@@ -1,0 +1,16 @@
+**/.terraform/*
+.terraform
+.vscode
+
+!.terraformrc
+
+*.tfstate
+*.tfstate.*
+
+terraform.tfvars
+.terraform.lock.hcl
+
+code/
+bloknot.txt
+key.json
+.vscode

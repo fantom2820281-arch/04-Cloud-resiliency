@@ -1,0 +1,67 @@
+#cloud-config
+package_update: true
+packages:
+  - nginx
+
+users:
+  - name: dima
+    groups: sudo
+    shell: /bin/bash
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID95JJEbprAb8RWzIpN1+sskJrq26BhMKUgy65qqg4wd dima@ws-HP
+
+write_files:
+  - path: /var/www/html/index.html
+    content: |
+      <!DOCTYPE html>
+      <html lang="ru">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Cloud Resiliency | Герасин Д.С.</title>
+        <style>
+          :root { --bg: #0b0f19; --card: #151b2b; --accent: #00ffaa; --text: #e2e8f0; --muted: #64748b; }
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 2rem; }
+          .container { background: var(--card); border: 1px solid #1e293b; border-radius: 16px; padding: 2.5rem; max-width: 640px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+          h1 { font-size: 1.8rem; margin-bottom: 0.5rem; background: linear-gradient(90deg, var(--accent), #38bdf8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+          .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 1.5rem; }
+          .badge { display: inline-block; padding: 0.4rem 0.8rem; background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; font-size: 0.85rem; margin-bottom: 1rem; }
+          .server { font-family: 'Courier New', monospace; color: #7cff00; background: #0a0f18; padding: 0.6rem 1rem; border-radius: 8px; border-left: 3px solid var(--accent); margin: 1rem 0; }
+          .status { display: flex; align-items: center; gap: 0.5rem; color: #94a3b8; font-size: 0.9rem; margin-top: 1.5rem; }
+          .dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 8px var(--accent); animation: pulse 2s infinite; }
+          @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+          .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #1e293b; font-size: 0.8rem; color: #475569; display: flex; justify-content: space-between; }
+          /* <!-- Сделано с ❤️ и пониманием в за минуту до дедлайна. --> */
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>Отказоустойчивый кластер</h1>
+          <div class="subtitle">Netology · DevOps Professional · Модуль 09</div>
+          
+          <div class="badge">🌐 Region: ru-central1 · 🛡️ High Availability</div>
+          
+          <div class="server">
+            🖥️ Instance: <strong>$${instance_name}</strong>
+          </div>
+
+          <div class="status">
+            <span class="dot"></span>
+            <span>Service: nginx · Port: 80 · Health: ACTIVE</span>
+          </div>
+
+          <div class="footer">
+            <span>© Герасин Дмитрий Сергеевич</span>
+            <span>2026 · Terraform + YC</span>
+          </div>
+        </div>
+      </body>
+      </html>
+
+runcmd:
+  - apt-get install -y nginx
+  - systemctl enable --now nginx
+  - sleep 15
+  - curl -s -o /dev/null -w "%%{http_code}" http://localhost > /tmp/nginx_check.txt
