@@ -63,7 +63,9 @@ terraform/
 Скриншоты YC-CLI
 
 ![cli](img/09-04-CLI-1.png)
+
 ![cli1](img/09-04-CLI-2.png)
+
 ![cli2](img/09-04-CLI-3.png)
 
 
@@ -81,7 +83,7 @@ ip vm1
 
 ip-vm2
 
-![vm2](img/09=04-3.png)
+![vm2](img/09-04-3.png)
 
 ip-lb 
 
@@ -111,9 +113,20 @@ ip-lb
 
 пересоздадим машины с внешними ip для более удобной отладки, 
 
-![CLI1](img/09-04-24.png)
+![web1](img/09-04-24.png)
 
 все настроили запустили 
+пересоздали машины без внешних ip
+
+консоль список машин
+
+![weblb](09-04-weblb)
+
+веб страница  адрес балансировщика
+
+![weblb](09-04-weblb1)
+
+
 
 ---
 ---
@@ -151,6 +164,9 @@ yc vpc network delete --name dima-network
 rm -f terraform.tfstate terraform.tfstate.backup .terraform.lock.hcl
 rm -rf .terraform/
 ```
+## не забывайте пересоздавать машины  без внешних ip после отладки.
+ 
+
 
 
 

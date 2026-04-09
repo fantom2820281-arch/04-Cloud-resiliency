@@ -1,58 +1,67 @@
 # =============================================================================
-# 1. СЕТЬ (VPC)
-# Виртуальное изолированное пространство. Аналог "участка" или "здания".
+# 1. СЕТЬ
 # =============================================================================
 resource "yandex_vpc_network" "main" {
   name = "${var.flow}-network"
-  
-  # labels нужны для поиска и фильтрации в консоли/скриптах
-  labels = {
-    project   = "netology-hw-09"
-    managed-by = "terraform"
+  labels = { project = "netology-hw-09", managed-by = "terraform" }
+}
+
+# =============================================================================
+# 2. УПРАВЛЯЕМЫЙ CLOUD NAT
+# Не требует создания ВМ, масштабируется сам, не светит IP бэкендов
+# =============================================================================
+resource "yandex_vpc_gateway" "nat_gw" {
+  name = "${var.flow}-nat-gateway"
+  shared_egress_gateway {}
+}
+
+# =============================================================================
+# 3. ТАБЛИЦА МАРШРУТИЗАЦИИ
+# Говорит подсетям: "всё, что не локальное → шлюй на NAT"
+# =============================================================================
+resource "yandex_vpc_route_table" "nat_rt" {
+  name       = "${var.flow}-nat-rt"
+  network_id = yandex_vpc_network.main.id
+
+  static_route {
+    destination_prefix = "0.0.0.0/0"
+    gateway_id         = yandex_vpc_gateway.nat_gw.id
   }
 }
 
 # =============================================================================
-# 2. ПОДСЕТИ
-# Делят сеть на логические сегменты. Одна подсеть = одна зона доступности.
-# Используем count, чтобы не копировать блоки руками.
+# 4. ПОДСЕТИ (с привязкой к таблице маршрутизации)
 # =============================================================================
 resource "yandex_vpc_subnet" "main" {
-  count          = length(var.zones) # Создадим ровно столько подсетей, сколько зон в списке
-  
+  count          = length(var.zones)
   name           = "${var.flow}-subnet-${replace(var.zones[count.index], "-", "")}"
   zone           = var.zones[count.index]
-  network_id     = yandex_vpc_network.main.id # 🔗 Привязка к сети выше
+  network_id     = yandex_vpc_network.main.id
   v4_cidr_blocks = [var.subnet_cidrs[count.index]]
   
-  labels = {
-    zone = var.zones[count.index]
-  }
+  # 🔥 КЛЮЧЕВАЯ СТРОКА: подсети теперь знают про NAT
+  route_table_id = yandex_vpc_route_table.nat_rt.id
 }
 
 # =============================================================================
-# 3. ГРУППА БЕЗОПАСНОСТИ (Security Group)
-# Это Виртуальный файервол. Он НЕ содержит интерфейсы или ВМ.
-# Он только описывает: "Что можно пропускать внутрь/наружу".
-# Применяется к интерфейсам ВМ через security_group_ids.
+# 5. ГРУППА БЕЗОПАСНОСТИ (без изменений, egress ANY уже разрешён)
 # =============================================================================
 resource "yandex_vpc_security_group" "main" {
   name       = "${var.flow}-sg"
-  network_id = yandex_vpc_network.main.id # 🔗 Должна жить внутри той же сети
+  network_id = yandex_vpc_network.main.id
 
-  # Входящие правила (ingress)
   ingress {
     protocol       = "TCP"
     port           = 22
     v4_cidr_blocks = ["0.0.0.0/0"]
-    description    = "SSH access for admin"
+    description    = "SSH access"
   }
 
   ingress {
     protocol       = "TCP"
     port           = 80
     v4_cidr_blocks = ["0.0.0.0/0"]
-    description    = "HTTP traffic for web"
+    description    = "HTTP access"
   }
 
   ingress {
@@ -61,10 +70,9 @@ resource "yandex_vpc_security_group" "main" {
     description    = "Ping diagnostics"
   }
 
-  # Исходящие правила (egress) - разрешаем всё наружу (для apt, curl, healthchecks)
   egress {
     protocol       = "ANY"
     v4_cidr_blocks = ["0.0.0.0/0"]
-    description    = "Allow all outbound traffic"
+    description    = "All outbound traffic"
   }
 }

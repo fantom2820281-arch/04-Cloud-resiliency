@@ -1,5 +1,7 @@
 #!/bin/bash
 export YC_CLI_INITIALIZATION_SILENCE=true
+export YC_CLI_INITIALIZATION_SILENCE=true
+export YC_CLI_INITIALIZATION_SILENCE=true
 echo 'export YC_CLI_INITIALIZATION_SILENCE=true' | sed -i '2i\export YC_CLI_INITIALIZATION_SILENCE=true' ./check_lb.sh
 
 
