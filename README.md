@@ -120,11 +120,11 @@ ip-lb
 
 консоль список машин
 
-![weblb](09-04-weblb.png)
+![scrin-CLI](09-04-weblb.png)
 
 веб страница  адрес балансировщика
 
-![weblb](09-04-weblb1.png)
+![scrin-lb](09-04-weblb1.png)
 
 
 
